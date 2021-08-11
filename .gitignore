@@ -1,0 +1,6 @@
+*.d.ts
+node_modules
+.cdk.staging
+cdk.out
+.vscode
+.DS_Store
