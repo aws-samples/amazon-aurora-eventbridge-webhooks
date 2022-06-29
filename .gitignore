@@ -4,3 +4,4 @@ node_modules
 cdk.out
 .vscode
 .DS_Store
+cdk.context.json
