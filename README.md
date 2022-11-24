@@ -14,6 +14,7 @@ Install the CDK toolkit: https://docs.aws.amazon.com/cdk/latest/guide/getting_st
 
 ## Getting Started
 
+- Export the current AWS IAM user to an environment variable to access the Cloud9 environment: `export CLOUD9_ARN=$(aws sts get-caller-identity | jq -r .Arn)`
 - Deploy the application using AWS CDK: `cd cdk && cdk deploy`
 - Connect to the provisioned AWS Cloud9 development instance
 - Install the postgres client tools: `sudo yum install postgresql`

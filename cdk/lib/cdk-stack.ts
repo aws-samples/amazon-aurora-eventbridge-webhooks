@@ -1,19 +1,21 @@
-import * as ec2 from "@aws-cdk/aws-ec2";
-import * as lambda from "@aws-cdk/aws-lambda";
-import * as rds from "@aws-cdk/aws-rds";
-import * as cdk from "@aws-cdk/core";
-import * as iam from "@aws-cdk/aws-iam";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as rds from "aws-cdk-lib/aws-rds";
+import { Construct } from "constructs";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as path from "path";
-import * as apigw from "@aws-cdk/aws-apigatewayv2";
-import * as apigwi from "@aws-cdk/aws-apigatewayv2-integrations";
-import * as events from "@aws-cdk/aws-events";
-import * as dynamodb from "@aws-cdk/aws-dynamodb";
-import * as cloud9 from "@aws-cdk/aws-cloud9";
-import * as secretsmanager from "@aws-cdk/aws-secretsmanager";
-import * as sqs from "@aws-cdk/aws-sqs";
+import * as apigw from "@aws-cdk/aws-apigatewayv2-alpha";
+import * as apigwi from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
+import * as events from "aws-cdk-lib/aws-events";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as cloud9 from "@aws-cdk/aws-cloud9-alpha";
+import * as cloud9cfn from "aws-cdk-lib/aws-cloud9";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import { Stack, StackProps } from "aws-cdk-lib";
 
-export class CdkStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+export class CdkStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     // VPC to host Aurora Cluster and Cloud9 instance
@@ -24,7 +26,7 @@ export class CdkStack extends cdk.Stack {
 
     // Lambda Function to relay event from Aurora to EventBridge
     const toEventBridge = new lambda.Function(this, "toEventBridgeFunction", {
-      runtime: lambda.Runtime.NODEJS_12_X,
+      runtime: lambda.Runtime.NODEJS_14_X,
       handler: "index.handler",
       code: lambda.Code.fromAsset(path.join("../functions", "toEventBridge")),
       environment: { EVENT_BUS: eventBus.eventBusName },
@@ -79,9 +81,14 @@ export class CdkStack extends cdk.Stack {
     dbInstance.addDependsOn(cluster);
 
     // Cloud9 Dev Environment to provide remote access to Aurora
-    new cloud9.Ec2Environment(this, "Cloud9Env", {
+    const cloud9Env = new cloud9.Ec2Environment(this, "Cloud9Env", {
       vpc,
+      imageId: cloud9.ImageId.AMAZON_LINUX_2,
     });
+
+    const cfnCloud9 = cloud9Env.node
+      .defaultChild as cloud9cfn.CfnEnvironmentEC2;
+    cfnCloud9.ownerArn = process.env.CLOUD9_ARN;
 
     const securityGroup = ec2.SecurityGroup.fromSecurityGroupId(
       this,
@@ -101,7 +108,7 @@ export class CdkStack extends cdk.Stack {
     });
 
     const toDynamoDB = new lambda.Function(this, "toDynamoDBFunction", {
-      runtime: lambda.Runtime.NODEJS_12_X,
+      runtime: lambda.Runtime.NODEJS_14_X,
       handler: "index.handler",
       code: lambda.Code.fromAsset(path.join("../functions", "toDynamoDB")),
       environment: { TABLE_NAME: widgetTable.tableName },
@@ -109,9 +116,10 @@ export class CdkStack extends cdk.Stack {
 
     widgetTable.grantReadWriteData(toDynamoDB);
 
-    const ddbDefaultIntegration = new apigwi.LambdaProxyIntegration({
-      handler: toDynamoDB,
-    });
+    const ddbDefaultIntegration = new apigwi.HttpLambdaIntegration(
+      "DDBDefaultIntegration",
+      toDynamoDB
+    );
 
     const httpApi = new apigw.HttpApi(this, "DestinationWebhookApi");
 
@@ -134,9 +142,9 @@ export class CdkStack extends cdk.Stack {
       {
         authorizationType: "API_KEY",
         authParameters: {
-          ApiKeyAuthParameters: {
-            ApiKeyName: "x-api-key",
-            ApiKeyValue: apiKey.secretValue.toString(),
+          apiKeyAuthParameters: {
+            apiKeyName: "x-api-key",
+            apiKeyValue: apiKey.secretValue.toString(),
           },
         },
       }

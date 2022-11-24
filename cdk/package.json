@@ -10,26 +10,16 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "@aws-cdk/assert": "1.181.0",
     "@types/node": "10.17.27",
-    "aws-cdk": "^1.161.0",
     "ts-node": "^9.0.0",
     "typescript": "^3.9.10"
   },
   "dependencies": {
-    "@aws-cdk/aws-apigatewayv2": "1.181.0",
-    "@aws-cdk/aws-apigatewayv2-integrations": "1.181.0",
-    "@aws-cdk/aws-cloud9": "1.181.0",
-    "@aws-cdk/aws-dynamodb": "1.181.0",
-    "@aws-cdk/aws-ec2": "1.181.0",
-    "@aws-cdk/aws-events": "1.181.0",
-    "@aws-cdk/aws-events-targets": "1.181.0",
-    "@aws-cdk/aws-iam": "1.181.0",
-    "@aws-cdk/aws-lambda": "1.181.0",
-    "@aws-cdk/aws-rds": "1.181.0",
-    "@aws-cdk/aws-secretsmanager": "1.181.0",
-    "@aws-cdk/aws-sqs": "1.181.0",
-    "@aws-cdk/core": "1.181.0",
+    "@aws-cdk/aws-apigatewayv2-alpha": "^2.51.1-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.51.1-alpha.0",
+    "@aws-cdk/aws-cloud9-alpha": "^2.51.1-alpha.0",
+    "aws-cdk": "^2.51.1",
+    "aws-cdk-lib": "^2.51.1",
     "source-map-support": "^0.5.16"
   }
 }
